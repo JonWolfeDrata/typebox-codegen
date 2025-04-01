@@ -258,10 +258,14 @@ export namespace ModelToArkType {
   }
   function GenerateType(schema: Types.TSchema, references: Types.TSchema[]) {
     const buffer: string[] = []
+    /*
+    // removed for being n^m [see: Issue #56]
     for (const reference of references) {
       if (reference.$id === undefined) return UnsupportedType(schema)
       reference_map.set(reference.$id, reference)
     }
+    */
+    if (!schema.$id || !reference_map.has(schema.$id)) return UnsupportedType(schema);
     const type = Collect(schema)
     buffer.push(`${schema.$id || `T`}: ${type}`)
     if (schema.$id) emitted_types.add(schema.$id)
@@ -275,6 +279,9 @@ export namespace ModelToArkType {
     emitted_types.clear()
     const buffer: string[] = []
     buffer.push('export const types = scope({')
+    for (const reference of model.types) {
+      if (reference.$id) reference_map.set(reference.$id, reference);
+    }
     for (const type of model.types.filter((type) => Types.TypeGuard.IsSchema(type))) {
       buffer.push(`${GenerateType(type, model.types)},`)
     }

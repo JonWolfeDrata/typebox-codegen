@@ -199,10 +199,14 @@ export namespace ModelToEffect {
   }
   function GenerateType(model: TypeBoxModel, schema: Types.TSchema, references: Types.TSchema[]) {
     const output: string[] = []
+    /*
+    // removed for being n^m [see: Issue #56]
     for (const reference of references) {
       if (reference.$id === undefined) return UnsupportedType(schema)
       reference_map.set(reference.$id, reference)
     }
+    */
+    if (!schema.$id || !reference_map.has(schema.$id)) return UnsupportedType(schema);
     const type = Collect(schema)
     output.push(`export type ${schema.$id} = ET.Type<typeof ${schema.$id}>`)
     output.push(`export const ${schema.$id || `T`} = ${Formatter.Format(type)}`)
@@ -220,6 +224,9 @@ export namespace ModelToEffect {
     buffer.push(`import { Schema as ET } from '@effect/schema/Schema'`)
     buffer.push(`import { Schema as ES } from '@effect/schema'`)
     buffer.push(``)
+    for (const reference of model.types) {
+      if (reference.$id) reference_map.set(reference.$id, reference);
+    }
     for (const type of model.types.filter((type) => Types.TypeGuard.IsSchema(type))) {
       buffer.push(GenerateType(model, type, model.types))
     }
